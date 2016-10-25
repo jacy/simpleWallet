@@ -33,13 +33,10 @@ import com.js.config.AppConfig;
 public class TransactionTest {
 	@Autowired
 	private WalletDao walletDao;
-
 	@Autowired
 	private WalletHistoryDao historyDao;
-
 	@Autowired
 	private TransactionService transactionService;
-
 	private static final ExecutorService EXECUTE_SERVICE = Executors.newFixedThreadPool(2000);
 
 	@Test

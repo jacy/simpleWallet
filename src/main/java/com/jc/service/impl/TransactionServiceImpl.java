@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jc.dao.WalletDao;
@@ -27,6 +28,7 @@ import com.jc.service.WalletInfoService;
 import com.jc.util.BigDecimalUtil;
 
 @Service("transactionService")
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class TransactionServiceImpl implements TransactionService {
 	@Autowired
 	private WalletInfoService infoService;
@@ -36,7 +38,6 @@ public class TransactionServiceImpl implements TransactionService {
 	private WalletDao walletDao;
 
 	@Override
-	@Transactional
 	public void transfer(Long fromWalletId, Long toWalletId, BigDecimal amount, String reference) {
 		validateRequest(fromWalletId, toWalletId, amount, reference);
 		Map<Long, Wallet> wallets = infoService.lockAndVerifyWalletInOrder(fromWalletId, toWalletId);
