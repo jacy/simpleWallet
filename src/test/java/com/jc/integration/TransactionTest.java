@@ -62,7 +62,9 @@ public class TransactionTest {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(4L));
 		final String prefix = "deadLockSameUserTest3To4-";
 		try {
-			CompletableFuture<?>[] futures = IntStream.rangeClosed(1, 1000).mapToObj(i -> CompletableFuture.runAsync(() -> transactionService.transfer(3L, 4L, BigDecimal.TEN, prefix + i), EXECUTE_SERVICE)).toArray(CompletableFuture[]::new);
+			CompletableFuture<?>[] futures = IntStream.rangeClosed(1, 1000).mapToObj(i -> CompletableFuture.runAsync(
+					() -> transactionService.transfer(3L, 4L, BigDecimal.TEN, prefix + i)
+			, EXECUTE_SERVICE)).toArray(CompletableFuture[]::new);
 			CompletableFuture.allOf(futures).join();
 		} catch (Exception e) {
 			fail();
