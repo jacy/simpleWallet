@@ -12,4 +12,9 @@ public class BadRequestException extends RuntimeException {
 		return error;
 	}
 
+	@Override
+	public String toString() {
+		return "BadRequestException [error=" + error + "]";
+	}
+
 }

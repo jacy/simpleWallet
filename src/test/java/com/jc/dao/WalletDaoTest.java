@@ -18,7 +18,13 @@ public class WalletDaoTest extends BaseMapperTestFramwork {
 		assertEquals(new Wallet(2L, BigDecimal.valueOf(10000), 0), walletDao.lockById(2L));
 		assertNull(walletDao.lockById(-1L));
 	}
-	
+
+	@Test
+	public void testGetBalance() {
+		assertEquals(new BigDecimal("100.23"), walletDao.getBalance(1L));
+		assertEquals(new BigDecimal("10000.00"), walletDao.getBalance(2L));
+	}
+
 	@Test
 	public void testUpdateBalance() {
 		assertEquals(new Wallet(1L, BigDecimal.valueOf(100.23), 1), walletDao.lockById(1L));

@@ -7,6 +7,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.js.config.AppConfig;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { AppConfig.class })
+@ContextConfiguration(classes = {AppConfig.class})
 public class BaseMapperTestFramwork {
 }

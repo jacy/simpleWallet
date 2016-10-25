@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jc.dao.WalletDao;
@@ -25,6 +26,7 @@ import com.jc.service.TransactionService;
 import com.jc.service.WalletInfoService;
 import com.jc.util.BigDecimalUtil;
 
+@Service("transactionService")
 public class TransactionServiceImpl implements TransactionService {
 	@Autowired
 	private WalletInfoService infoService;

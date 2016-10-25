@@ -15,4 +15,7 @@ public interface WalletDao {
 	@Update("UPDATE wallet SET balance=#{after} where id=#{id}")
 	void updateBalance(@Param("id") Long id, @Param("after") BigDecimal after);
 
+	@Select("SELECT balance FROM wallet WHERE id = #{id}")
+	BigDecimal getBalance(Long id);
+
 }

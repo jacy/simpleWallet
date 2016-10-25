@@ -8,12 +8,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.jc.dao.WalletDao;
 import com.jc.domain.Wallet;
 import com.jc.exception.BadRequestException;
 import com.jc.service.WalletInfoService;
 
+@Service("walletInfoService")
 public class WalletInfoServiceImpl implements WalletInfoService {
 	@Autowired
 	private WalletDao walletDao;
