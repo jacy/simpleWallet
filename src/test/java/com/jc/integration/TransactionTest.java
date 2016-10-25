@@ -41,7 +41,7 @@ public class TransactionTest {
 	private static final ExecutorService EXECUTE_SERVICE = Executors.newFixedThreadPool(2000);
 
 	@Test
-	public void testTransactionWillBeRockballIfSameReferenceExists() {
+	public void testTransactionWillBeRockbackIfSameReferenceExists() {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(3L));
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(4L));
 		assertNotNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDIN));
