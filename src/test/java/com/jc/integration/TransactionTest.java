@@ -19,13 +19,13 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.jc.config.AppConfig;
 import com.jc.dao.WalletDao;
 import com.jc.dao.WalletHistoryDao;
 import com.jc.domain.WalletHistoryType;
 import com.jc.exception.BadRequestException;
 import com.jc.exception.Errors;
 import com.jc.service.TransactionService;
-import com.js.config.AppConfig;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { AppConfig.class })
