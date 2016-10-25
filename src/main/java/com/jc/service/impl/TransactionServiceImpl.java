@@ -47,10 +47,8 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	public WalletHistory changeBalance(Wallet wallet, BigDecimal amount, String reference, WalletHistoryType type, String description) {
-		BigDecimal after = caculateBalance(amount, wallet.getBalance());
-		Optional.ofNullable(historyDao.getByRefAndType(reference, type)).ifPresent(h -> {
-			throw new BadRequestException(TRANSACTION_EXISTS);
-		});
+		BigDecimal after = caculateAndVerifyBalance(amount, wallet.getBalance());
+		Optional.ofNullable(historyDao.getByRefAndType(reference, type)).ifPresent(h -> {throw new BadRequestException(TRANSACTION_EXISTS);});
 		WalletHistory history = new WalletHistory(UUID.randomUUID().toString(), wallet.getId(), wallet.getBalance(), after, new Date(), reference, amount, type, description);
 		historyDao.insert(history);
 		walletDao.updateBalance(wallet.getId(), after);
@@ -70,7 +68,7 @@ public class TransactionServiceImpl implements TransactionService {
 		return amount.compareTo(BigDecimal.ZERO) >= 0;
 	}
 
-	private BigDecimal caculateBalance(BigDecimal amount, BigDecimal balance) {
+	private BigDecimal caculateAndVerifyBalance(BigDecimal amount, BigDecimal balance) {
 		BigDecimal after = BigDecimalUtil.add(balance, amount);
 		if (!isPositive(after)) {
 			throw new BadRequestException(INSUFFICIENT_BALANCE);
