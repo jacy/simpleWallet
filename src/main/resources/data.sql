@@ -12,6 +12,8 @@ insert into wallet (id, balance, status) values(11, 100000,1);
 insert into wallet (id, balance, status) values(12, 100000,1);
 insert into wallet (id, balance, status) values(13, 100000,1);
 insert into wallet (id, balance, status) values(14, 100000,1);
+insert into wallet (id, balance, status) values(15, 100000,1);
+insert into wallet (id, balance, status) values(16, 100000,1);
  
 insert into wallet_history (id, wallet_id, before, after, amount, ref, createtime, type) 
 values('id1', 1, 0, 100.23, 100.23, 'ref1', '2016-10-24 20:30:40', 'FUNDIN');

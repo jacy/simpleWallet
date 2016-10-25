@@ -42,18 +42,18 @@ public class TransactionTest {
 
 	@Test
 	public void testTransactionWillBeRockbackIfSameReferenceExists() {
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(3L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(4L));
+		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(15L));
+		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(16L));
 		assertNotNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDIN));
 		assertNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDOUT));
 		try {
-			transactionService.transfer(3L, 4L, BigDecimal.ONE, "ref1");
+			transactionService.transfer(15L, 16L, BigDecimal.ONE, "ref1");
 			fail();
 		} catch (BadRequestException e) {
 			assertEquals(Errors.TRANSACTION_EXISTS, e.getError());
 		}
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(3L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(4L));
+		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(15L));
+		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(16L));
 		assertNotNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDIN));
 		assertNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDOUT));
 	}
