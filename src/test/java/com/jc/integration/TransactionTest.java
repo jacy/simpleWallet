@@ -126,9 +126,6 @@ public class TransactionTest {
 			transactionService.transfer(8L, 10L, BigDecimal.TEN, prefix1 + i);
 			transactionService.transfer(9L, 10L, BigDecimal.TEN, prefix2 + i);
 		}, failOnException);
-		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(8L));
-		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(9L));
-		assertEquals(new BigDecimal("120000.00"), walletDao.getBalance(10L));
 		assertBalance(8L, "90000.00");
 		assertBalance(9L, "90000.00");
 		assertBalance(10L, "120000.00");
