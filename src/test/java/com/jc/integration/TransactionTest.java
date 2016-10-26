@@ -50,8 +50,8 @@ public class TransactionTest {
 
 	@Test
 	public void testTransactionWillBeRockbackIfSameReferenceExists() {
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(15L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(16L));
+		assertBalance(15L, "100000.00");
+		assertBalance(16L, "100000.00");
 		assertNotNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDIN));
 		assertNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDOUT));
 		try {
@@ -60,16 +60,16 @@ public class TransactionTest {
 		} catch (BadRequestException e) {
 			assertEquals(Errors.TRANSACTION_EXISTS, e.getError());
 		}
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(15L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(16L));
+		assertBalance(15L, "100000.00");
+		assertBalance(16L, "100000.00");
 		assertNotNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDIN));
 		assertNull(historyDao.getByRefAndType("ref1", WalletHistoryType.FUNDOUT));
 	}
 
 	@Test
 	public void tesDuplicateTransferRequestsOnlyOneWillSucceed() {
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(13L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(14L));
+		assertBalance(13L, "100000.00");
+		assertBalance(14L, "100000.00");
 		final String ref = "same-ref";
 		final AtomicInteger errorCount = new AtomicInteger();
 		parallelRunning(i -> () -> transactionService.transfer(13L, 14L, BigDecimal.TEN, ref), e -> {
@@ -78,37 +78,37 @@ public class TransactionTest {
 			errorCount.incrementAndGet();
 			return null;
 		});
-		assertEquals(999, errorCount.get());
-		assertEquals(new BigDecimal("99990.00"), walletDao.getBalance(13L));
-		assertEquals(new BigDecimal("100010.00"), walletDao.getBalance(14L));
+		assertEquals(PARALLEL_THREAD_COUNTS - 1, errorCount.get());
+		assertBalance(13L, "99990.00");
+		assertBalance(14L, "100010.00");
 		assertFundInFundOutExist(ref);
 	}
 
 	@Test
 	public void testNoDeadLockIfUserASendMoneyToUserBAtTheSameTime() {
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(3L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(4L));
+		assertBalance(3L, "100000.00");
+		assertBalance(4L, "100000.00");
 		final String prefix = "deadLockSameUserTest3To4-";
 		parallelRunning(i -> () -> transactionService.transfer(3L, 4L, BigDecimal.TEN, prefix + i), failOnException);
-		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(3L));
-		assertEquals(new BigDecimal("110000.00"), walletDao.getBalance(4L));
+		assertBalance(3L, "90000.00");
+		assertBalance(4L, "110000.00");
 		parallelAssert(i -> assertFundInFundOutExist(prefix + i));
 	}
-	
+
 	@Test
 	public void testNoDeadLockIfUserASendMoneyToUserBAndUserCAtTheSameTime() {
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(5L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(6L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(7L));
+		assertBalance(5L, "100000.00");
+		assertBalance(6L, "100000.00");
+		assertBalance(7L, "100000.00");
 		final String prefix1 = "deadLockDiffUserTest5To6-";
 		final String prefix2 = "deadLockDiffUserTest5To7-";
 		parallelRunning(i -> () -> {
 			transactionService.transfer(5L, 6L, BigDecimal.TEN, prefix1 + i);
 			transactionService.transfer(5L, 7L, BigDecimal.TEN, prefix2 + i);
 		}, failOnException);
-		assertEquals(new BigDecimal("80000.00"), walletDao.getBalance(5L));
-		assertEquals(new BigDecimal("110000.00"), walletDao.getBalance(6L));
-		assertEquals(new BigDecimal("110000.00"), walletDao.getBalance(7L));
+		assertBalance(5L, "80000.00");
+		assertBalance(6L, "110000.00");
+		assertBalance(7L, "110000.00");
 		parallelAssert(i -> {
 			assertFundInFundOutExist(prefix1 + i);
 			assertFundInFundOutExist(prefix2 + i);
@@ -117,9 +117,9 @@ public class TransactionTest {
 
 	@Test
 	public void testNoDeadLockIfUserAReceivesMoneyFromUserBAndUserCAtTheSameTime() {
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(8L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(9L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(10L));
+		assertBalance(8L, "100000.00");
+		assertBalance(9L, "100000.00");
+		assertBalance(10L, "100000.00");
 		final String prefix1 = "deadLockDiffUserTest8To10--";
 		final String prefix2 = "deadLockDiffUserTest9To10-";
 		parallelRunning(i -> () -> {
@@ -129,6 +129,9 @@ public class TransactionTest {
 		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(8L));
 		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(9L));
 		assertEquals(new BigDecimal("120000.00"), walletDao.getBalance(10L));
+		assertBalance(8L, "90000.00");
+		assertBalance(9L, "90000.00");
+		assertBalance(10L, "120000.00");
 		parallelAssert(i -> {
 			assertFundInFundOutExist(prefix1 + i);
 			assertFundInFundOutExist(prefix2 + i);
@@ -137,22 +140,22 @@ public class TransactionTest {
 
 	@Test
 	public void testNoDeadLockIf2UsersTransferMoneyToEachOtherAtTheSameTime() {
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(11L));
-		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(12L));
+		assertBalance(11L, "100000.00");
+		assertBalance(12L, "100000.00");
 		final String prefix1 = "deadLockDiffUserTest11To12--";
 		final String prefix2 = "deadLockDiffUserTest12To11-";
 		parallelRunning(i -> () -> {
 			transactionService.transfer(11L, 12L, BigDecimal.TEN, prefix1 + i);
 			transactionService.transfer(12L, 11L, BigDecimal.ONE, prefix2 + i);
 		}, failOnException);
-		assertEquals(new BigDecimal("91000.00"), walletDao.getBalance(11L));
-		assertEquals(new BigDecimal("109000.00"), walletDao.getBalance(12L));
+		assertBalance(11L, "91000.00");
+		assertBalance(12L, "109000.00");
 		parallelAssert(i -> {
 			assertFundInFundOutExist(prefix1 + i);
 			assertFundInFundOutExist(prefix2 + i);
 		});
 	}
-	
+
 	private void parallelAssert(Consumer<Integer> assertion) {
 		IntStream.rangeClosed(1, PARALLEL_THREAD_COUNTS).forEach(i -> assertion.accept(i));
 	}
@@ -165,5 +168,9 @@ public class TransactionTest {
 	private void assertFundInFundOutExist(String ref) {
 		assertNotNull(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDIN));
 		assertNotNull(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDOUT));
+	}
+	
+	private void assertBalance(Long walletId, String balance) {
+		assertEquals(new BigDecimal(balance), walletDao.getBalance(walletId));
 	}
 }
