@@ -11,6 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
@@ -38,7 +40,13 @@ public class TransactionTest {
 	private WalletHistoryDao historyDao;
 	@Autowired
 	private TransactionService transactionService;
-	private static final ExecutorService EXECUTE_SERVICE = Executors.newFixedThreadPool(2000);
+	private static final int TOTAL_THREAD_COUNTS = 2000;
+	private static final int PARALLEL_THREAD_COUNTS = 1000;
+	private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(TOTAL_THREAD_COUNTS);
+	private Function<Throwable, Void> failOnException = e -> {
+		fail();
+		return null;
+	};
 
 	@Test
 	public void testTransactionWillBeRockbackIfSameReferenceExists() {
@@ -64,13 +72,12 @@ public class TransactionTest {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(14L));
 		final String ref = "same-ref";
 		final AtomicInteger errorCount = new AtomicInteger();
-		CompletableFuture<?>[] futures = IntStream.rangeClosed(1, 1000).mapToObj(i -> CompletableFuture.runAsync(() -> transactionService.transfer(13L, 14L, BigDecimal.TEN, ref), EXECUTE_SERVICE).exceptionally(e -> {
+		parallelRunning(i -> () -> transactionService.transfer(13L, 14L, BigDecimal.TEN, ref), e -> {
 			assertTrue(e.getCause() instanceof BadRequestException);
 			assertEquals(Errors.TRANSACTION_EXISTS, ((BadRequestException) e.getCause()).getError());
 			errorCount.incrementAndGet();
 			return null;
-		})).toArray(CompletableFuture[]::new);
-		CompletableFuture.allOf(futures).join();
+		});
 		assertEquals(999, errorCount.get());
 		assertEquals(new BigDecimal("99990.00"), walletDao.getBalance(13L));
 		assertEquals(new BigDecimal("100010.00"), walletDao.getBalance(14L));
@@ -82,22 +89,12 @@ public class TransactionTest {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(3L));
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(4L));
 		final String prefix = "deadLockSameUserTest3To4-";
-		try {
-			CompletableFuture<?>[] futures = IntStream.rangeClosed(1, 1000).mapToObj(i -> CompletableFuture.runAsync(() -> transactionService.transfer(3L, 4L, BigDecimal.TEN, prefix + i), EXECUTE_SERVICE)).toArray(CompletableFuture[]::new);
-			CompletableFuture.allOf(futures).join();
-		} catch (Exception e) {
-			fail();
-		}
+		parallelRunning(i -> () -> transactionService.transfer(3L, 4L, BigDecimal.TEN, prefix + i), failOnException);
 		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(3L));
 		assertEquals(new BigDecimal("110000.00"), walletDao.getBalance(4L));
-		IntStream.rangeClosed(1, 1000).forEach(i -> assertFundInFundOutExist(prefix + i));
+		parallelAssert(i -> assertFundInFundOutExist(prefix + i));
 	}
-
-	private void assertFundInFundOutExist(String ref) {
-		assertNotNull(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDIN));
-		assertNotNull(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDOUT));
-	}
-
+	
 	@Test
 	public void testNoDeadLockIfUserASendMoneyToUserBAndUserCAtTheSameTime() {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(5L));
@@ -105,20 +102,14 @@ public class TransactionTest {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(7L));
 		final String prefix1 = "deadLockDiffUserTest5To6-";
 		final String prefix2 = "deadLockDiffUserTest5To7-";
-		try {
-			CompletableFuture<?>[] futures = IntStream.rangeClosed(1, 1000).mapToObj(i -> CompletableFuture.runAsync(() -> {
-				transactionService.transfer(5L, 6L, BigDecimal.TEN, prefix1 + i);
-				transactionService.transfer(5L, 7L, BigDecimal.TEN, prefix2 + i);
-			}, EXECUTE_SERVICE)).toArray(CompletableFuture[]::new);
-			CompletableFuture.allOf(futures).join();
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail();
-		}
+		parallelRunning(i -> () -> {
+			transactionService.transfer(5L, 6L, BigDecimal.TEN, prefix1 + i);
+			transactionService.transfer(5L, 7L, BigDecimal.TEN, prefix2 + i);
+		}, failOnException);
 		assertEquals(new BigDecimal("80000.00"), walletDao.getBalance(5L));
 		assertEquals(new BigDecimal("110000.00"), walletDao.getBalance(6L));
 		assertEquals(new BigDecimal("110000.00"), walletDao.getBalance(7L));
-		IntStream.rangeClosed(1, 1000).forEach(i -> {
+		parallelAssert(i -> {
 			assertFundInFundOutExist(prefix1 + i);
 			assertFundInFundOutExist(prefix2 + i);
 		});
@@ -131,20 +122,14 @@ public class TransactionTest {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(10L));
 		final String prefix1 = "deadLockDiffUserTest8To10--";
 		final String prefix2 = "deadLockDiffUserTest9To10-";
-		try {
-			CompletableFuture<?>[] futures = IntStream.rangeClosed(1, 1000).mapToObj(i -> CompletableFuture.runAsync(() -> {
-				transactionService.transfer(8L, 10L, BigDecimal.TEN, prefix1 + i);
-				transactionService.transfer(9L, 10L, BigDecimal.TEN, prefix2 + i);
-			}, EXECUTE_SERVICE)).toArray(CompletableFuture[]::new);
-			CompletableFuture.allOf(futures).join();
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail();
-		}
+		parallelRunning(i -> () -> {
+			transactionService.transfer(8L, 10L, BigDecimal.TEN, prefix1 + i);
+			transactionService.transfer(9L, 10L, BigDecimal.TEN, prefix2 + i);
+		}, failOnException);
 		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(8L));
 		assertEquals(new BigDecimal("90000.00"), walletDao.getBalance(9L));
 		assertEquals(new BigDecimal("120000.00"), walletDao.getBalance(10L));
-		IntStream.rangeClosed(1, 1000).forEach(i -> {
+		parallelAssert(i -> {
 			assertFundInFundOutExist(prefix1 + i);
 			assertFundInFundOutExist(prefix2 + i);
 		});
@@ -156,21 +141,29 @@ public class TransactionTest {
 		assertEquals(new BigDecimal("100000.00"), walletDao.getBalance(12L));
 		final String prefix1 = "deadLockDiffUserTest11To12--";
 		final String prefix2 = "deadLockDiffUserTest12To11-";
-		try {
-			CompletableFuture<?>[] futures = IntStream.rangeClosed(1, 1000).mapToObj(i -> CompletableFuture.runAsync(() -> {
-				transactionService.transfer(11L, 12L, BigDecimal.TEN, prefix1 + i);
-				transactionService.transfer(12L, 11L, BigDecimal.ONE, prefix2 + i);
-			}, EXECUTE_SERVICE)).toArray(CompletableFuture[]::new);
-			CompletableFuture.allOf(futures).join();
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail();
-		}
+		parallelRunning(i -> () -> {
+			transactionService.transfer(11L, 12L, BigDecimal.TEN, prefix1 + i);
+			transactionService.transfer(12L, 11L, BigDecimal.ONE, prefix2 + i);
+		}, failOnException);
 		assertEquals(new BigDecimal("91000.00"), walletDao.getBalance(11L));
 		assertEquals(new BigDecimal("109000.00"), walletDao.getBalance(12L));
-		IntStream.rangeClosed(1, 1000).forEach(i -> {
+		parallelAssert(i -> {
 			assertFundInFundOutExist(prefix1 + i);
 			assertFundInFundOutExist(prefix2 + i);
 		});
+	}
+	
+	private void parallelAssert(Consumer<Integer> assertion) {
+		IntStream.rangeClosed(1, PARALLEL_THREAD_COUNTS).forEach(i -> assertion.accept(i));
+	}
+
+	private void parallelRunning(Function<Integer, Runnable> jobBuilder, Function<Throwable, Void> exceptionCallback) {
+		CompletableFuture<?>[] futures = IntStream.rangeClosed(1, PARALLEL_THREAD_COUNTS).mapToObj(i -> CompletableFuture.runAsync(jobBuilder.apply(i), EXECUTOR).exceptionally(exceptionCallback)).toArray(CompletableFuture[]::new);
+		CompletableFuture.allOf(futures).join();
+	}
+
+	private void assertFundInFundOutExist(String ref) {
+		assertNotNull(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDIN));
+		assertNotNull(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDOUT));
 	}
 }
