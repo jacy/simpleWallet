@@ -48,7 +48,6 @@ public class TransactionServiceTest {
 	private Wallet wallet;
 	private Wallet wallet2;
 
-	private String description = "testDescription";
 	private String ref = UUID.randomUUID().toString();
 
 	@Before
@@ -62,7 +61,7 @@ public class TransactionServiceTest {
 	@Test
 	public void testChangeBalanceComplainsIfAfterIsNegative() {
 		try {
-			service.changeBalance(wallet, BigDecimal.valueOf(-10.01), ref, WalletHistoryType.FUNDOUT, description);
+			service.changeBalance(wallet, BigDecimal.valueOf(-10.01), ref, WalletHistoryType.FUNDOUT, walletId2);
 			fail();
 		} catch (BadRequestException e) {
 			assertEquals(Errors.INSUFFICIENT_BALANCE, e.getError());
@@ -74,7 +73,7 @@ public class TransactionServiceTest {
 	public void testChangeBalanceComplainsIfTransactionExists() {
 		Mockito.when(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDOUT)).thenReturn(new WalletHistory());
 		try {
-			service.changeBalance(wallet, BigDecimal.valueOf(-9.99), ref, WalletHistoryType.FUNDOUT, description);
+			service.changeBalance(wallet, BigDecimal.valueOf(-9.99), ref, WalletHistoryType.FUNDOUT, walletId2);
 			fail();
 		} catch (BadRequestException e) {
 			assertEquals(Errors.TRANSACTION_EXISTS, e.getError());
@@ -88,7 +87,7 @@ public class TransactionServiceTest {
 	public void testChangeBalanceSuccessIfAmountIsNegative() {
 		Mockito.when(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDOUT)).thenReturn(null);
 		BigDecimal amount = BigDecimal.valueOf(-9.99);
-		WalletHistory history = service.changeBalance(wallet, amount, ref, WalletHistoryType.FUNDOUT, description);
+		WalletHistory history = service.changeBalance(wallet, amount, ref, WalletHistoryType.FUNDOUT, walletId2);
 		InOrder inOrder = Mockito.inOrder(walletDao, historyDao, infoService);
 		inOrder.verify(historyDao).getByRefAndType(ref, WalletHistoryType.FUNDOUT);
 		inOrder.verify(historyDao).insert(Mockito.any(WalletHistory.class));
@@ -98,7 +97,7 @@ public class TransactionServiceTest {
 		assertEquals(new BigDecimal("-9.99"), history.getAmount());
 		assertEquals(ref, history.getRef());
 		assertNotNull(history.getCreatetime());
-		assertEquals(description, history.getDescription());
+		assertEquals(walletId2, history.getRefWalletId());
 		assertNotNull(history.getId());
 		assertEquals(WalletHistoryType.FUNDOUT, history.getType());
 		assertEquals(walletId, history.getWalletId());
@@ -109,7 +108,7 @@ public class TransactionServiceTest {
 	public void testChangeBalanceSuccessIfAmountIsPositive() {
 		Mockito.when(historyDao.getByRefAndType(ref, WalletHistoryType.FUNDIN)).thenReturn(null);
 		BigDecimal amount = BigDecimal.valueOf(9.99);
-		WalletHistory history = service.changeBalance(wallet, amount, ref, WalletHistoryType.FUNDIN, description);
+		WalletHistory history = service.changeBalance(wallet, amount, ref, WalletHistoryType.FUNDIN, walletId2);
 		InOrder inOrder = Mockito.inOrder(walletDao, historyDao, infoService);
 		inOrder.verify(historyDao).getByRefAndType(ref, WalletHistoryType.FUNDIN);
 		inOrder.verify(historyDao).insert(Mockito.any(WalletHistory.class));
@@ -119,7 +118,7 @@ public class TransactionServiceTest {
 		assertEquals(new BigDecimal("9.99"), history.getAmount());
 		assertEquals(ref, history.getRef());
 		assertNotNull(history.getCreatetime());
-		assertEquals(description, history.getDescription());
+		assertEquals(walletId2, history.getRefWalletId());
 		assertNotNull(history.getId());
 		assertEquals(WalletHistoryType.FUNDIN, history.getType());
 		assertEquals(walletId, history.getWalletId());
@@ -198,13 +197,13 @@ public class TransactionServiceTest {
 		wallets.put(walletId, wallet);
 		wallets.put(walletId2, wallet2);
 		Mockito.doReturn(wallets).when(infoService).lockAndVerifyWalletInOrder(walletId, walletId2);
-		Mockito.doReturn(new WalletHistory()).when(spyService).changeBalance(wallet, new BigDecimal("-10.00"), ref, WalletHistoryType.FUNDOUT, "Send 10.00 to 2");
-		Mockito.doReturn(new WalletHistory()).when(spyService).changeBalance(wallet2, new BigDecimal("10.00"), ref, WalletHistoryType.FUNDIN, "Receive 10.00 from 1");
+		Mockito.doReturn(new WalletHistory()).when(spyService).changeBalance(wallet, new BigDecimal("-10.00"), ref, WalletHistoryType.FUNDOUT, walletId2);
+		Mockito.doReturn(new WalletHistory()).when(spyService).changeBalance(wallet2, new BigDecimal("10.00"), ref, WalletHistoryType.FUNDIN, walletId);
 		spyService.transfer(walletId, walletId2, new BigDecimal(10.001), ref);
 		InOrder inOrder = Mockito.inOrder(spyService, walletDao, historyDao, infoService);
 		inOrder.verify(infoService).lockAndVerifyWalletInOrder(walletId, walletId2);
-		inOrder.verify(spyService).changeBalance(wallet, new BigDecimal("-10.00"), ref, WalletHistoryType.FUNDOUT, "Send 10.00 to 2");
-		inOrder.verify(spyService).changeBalance(wallet2, new BigDecimal("10.00"), ref, WalletHistoryType.FUNDIN, "Receive 10.00 from 1");
+		inOrder.verify(spyService).changeBalance(wallet, new BigDecimal("-10.00"), ref, WalletHistoryType.FUNDOUT, walletId2);
+		inOrder.verify(spyService).changeBalance(wallet2, new BigDecimal("10.00"), ref, WalletHistoryType.FUNDIN, walletId);
 		Mockito.verifyNoMoreInteractions(walletDao, historyDao, infoService);
 	}
 }

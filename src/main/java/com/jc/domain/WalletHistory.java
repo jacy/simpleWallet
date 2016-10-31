@@ -6,19 +6,19 @@ import java.util.Date;
 public class WalletHistory {
 	private String id;
 	private Long walletId;
+	private Long refWalletId;
 	private BigDecimal before;
 	private BigDecimal after;
 	private Date createtime;
 	private String ref;
 	private BigDecimal amount;
 	private WalletHistoryType type;
-	private String description;
 
 	public WalletHistory() {
 		super();
 	}
 
-	public WalletHistory(String id, Long walletId, BigDecimal before, BigDecimal after, Date createtime, String ref, BigDecimal amount, WalletHistoryType type, String description) {
+	public WalletHistory(String id, Long walletId, BigDecimal before, BigDecimal after, Date createtime, String ref, BigDecimal amount, WalletHistoryType type, Long refWalletId) {
 		this.id = id;
 		this.walletId = walletId;
 		this.before = before;
@@ -27,7 +27,7 @@ public class WalletHistory {
 		this.ref = ref;
 		this.amount = amount;
 		this.type = type;
-		this.description = description;
+		this.refWalletId = refWalletId;
 	}
 
 	public String getId() {
@@ -94,12 +94,12 @@ public class WalletHistory {
 		this.type = type;
 	}
 
-	public String getDescription() {
-		return description;
+	public Long getRefWalletId() {
+		return refWalletId;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	public void setRefWalletId(Long refWalletId) {
+		this.refWalletId = refWalletId;
 	}
 
 	@Override
@@ -110,9 +110,9 @@ public class WalletHistory {
 		result = prime * result + ((amount == null) ? 0 : amount.hashCode());
 		result = prime * result + ((before == null) ? 0 : before.hashCode());
 		result = prime * result + ((createtime == null) ? 0 : createtime.hashCode());
-		result = prime * result + ((description == null) ? 0 : description.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((ref == null) ? 0 : ref.hashCode());
+		result = prime * result + ((refWalletId == null) ? 0 : refWalletId.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + ((walletId == null) ? 0 : walletId.hashCode());
 		return result;
@@ -147,11 +147,6 @@ public class WalletHistory {
 				return false;
 		} else if (!createtime.equals(other.createtime))
 			return false;
-		if (description == null) {
-			if (other.description != null)
-				return false;
-		} else if (!description.equals(other.description))
-			return false;
 		if (id == null) {
 			if (other.id != null)
 				return false;
@@ -161,6 +156,11 @@ public class WalletHistory {
 			if (other.ref != null)
 				return false;
 		} else if (!ref.equals(other.ref))
+			return false;
+		if (refWalletId == null) {
+			if (other.refWalletId != null)
+				return false;
+		} else if (!refWalletId.equals(other.refWalletId))
 			return false;
 		if (type != other.type)
 			return false;
@@ -174,7 +174,7 @@ public class WalletHistory {
 
 	@Override
 	public String toString() {
-		return "WalletHistory [id=" + id + ", walletId=" + walletId + ", before=" + before + ", after=" + after + ", createtime=" + createtime + ", ref=" + ref + ", amount=" + amount + ", type=" + type + ", description=" + description + "]";
+		return "WalletHistory [id=" + id + ", walletId=" + walletId + ", refWalletId=" + refWalletId + ", before=" + before + ", after=" + after + ", createtime=" + createtime + ", ref=" + ref + ", amount=" + amount + ", type=" + type + "]";
 	}
 
 }

@@ -42,14 +42,14 @@ public class TransactionServiceImpl implements TransactionService {
 		validateRequest(fromWalletId, toWalletId, amount, reference);
 		Map<Long, Wallet> wallets = infoService.lockAndVerifyWalletInOrder(fromWalletId, toWalletId);
 		amount = BigDecimalUtil.roundDown(amount);
-		changeBalance(wallets.get(fromWalletId), amount.negate(), reference, FUNDOUT, "Send " + amount + " to " + toWalletId);
-		changeBalance(wallets.get(toWalletId), amount, reference, FUNDIN, "Receive " + amount + " from " + fromWalletId);
+		changeBalance(wallets.get(fromWalletId), amount.negate(), reference, FUNDOUT, toWalletId);
+		changeBalance(wallets.get(toWalletId), amount, reference, FUNDIN, fromWalletId);
 	}
 
-	public WalletHistory changeBalance(Wallet wallet, BigDecimal amount, String reference, WalletHistoryType type, String description) {
+	public WalletHistory changeBalance(Wallet wallet, BigDecimal amount, String reference, WalletHistoryType type, Long refWalletId) {
 		BigDecimal after = caculateAndVerifyBalance(amount, wallet.getBalance());
 		Optional.ofNullable(historyDao.getByRefAndType(reference, type)).ifPresent(h -> {throw new BadRequestException(TRANSACTION_EXISTS);});
-		WalletHistory history = new WalletHistory(UUID.randomUUID().toString(), wallet.getId(), wallet.getBalance(), after, new Date(), reference, amount, type, description);
+		WalletHistory history = new WalletHistory(UUID.randomUUID().toString(), wallet.getId(), wallet.getBalance(), after, new Date(), reference, amount, type, refWalletId);
 		historyDao.insert(history);
 		walletDao.updateBalance(wallet.getId(), after);
 		return history;

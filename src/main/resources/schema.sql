@@ -14,7 +14,10 @@ CREATE TABLE wallet_history (
   ref VARCHAR(64),
   createtime TIMESTAMP,
   type VARCHAR(16),
-  description VARCHAR(128),
+  ref_wallet_id BIGINT,
   PRIMARY KEY (id),
   UNIQUE (ref, type)
 );
+
+CREATE INDEX idx_wallet_id ON wallet_history(wallet_id);
+CREATE INDEX idx_ref_wallet_id ON wallet_history(ref_wallet_id);

@@ -24,9 +24,9 @@ public class WalletHistoryDaoTest extends BaseMapperTestFramwork {
 	@Test
 	public void testGetByRefAndType() {
 		WalletHistory historyFromDB = walletHistoryDao.getByRefAndType("ref1", WalletHistoryType.FUNDIN);
-		assertEquals(new WalletHistory("id1", 1L, BigDecimal.ZERO, BigDecimal.valueOf(100.23), parse("2016-10-24 20:30:40"), "ref1", BigDecimal.valueOf(100.23), WalletHistoryType.FUNDIN, null), historyFromDB);
+		assertEquals(new WalletHistory("id1", 1L, BigDecimal.ZERO, BigDecimal.valueOf(100.23), parse("2016-10-24 20:30:40"), "ref1", BigDecimal.valueOf(100.23), WalletHistoryType.FUNDIN, 2L), historyFromDB);
 		historyFromDB = walletHistoryDao.getByRefAndType("ref2", WalletHistoryType.FUNDIN);
-		assertEquals(new WalletHistory("id2", 2L, BigDecimal.ZERO, BigDecimal.valueOf(10000), parse("2016-10-25 20:30:40"), "ref2", BigDecimal.valueOf(10000), WalletHistoryType.FUNDIN, null), historyFromDB);
+		assertEquals(new WalletHistory("id2", 2L, BigDecimal.ZERO, BigDecimal.valueOf(10000), parse("2016-10-25 20:30:40"), "ref2", BigDecimal.valueOf(10000), WalletHistoryType.FUNDIN, 1L), historyFromDB);
 		assertNull(walletHistoryDao.getByRefAndType("ref1", WalletHistoryType.FUNDOUT));
 	}
 
@@ -35,7 +35,7 @@ public class WalletHistoryDaoTest extends BaseMapperTestFramwork {
 		String ref = UUID.randomUUID().toString();
 		assertNull(walletHistoryDao.getByRefAndType(ref, WalletHistoryType.FUNDOUT));
 		Date date = new Date();
-		WalletHistory history = new WalletHistory("testinsert1", 1L, BigDecimal.ZERO, BigDecimal.TEN, date, ref, BigDecimal.TEN, WalletHistoryType.FUNDIN, "testDescription");
+		WalletHistory history = new WalletHistory("testinsert1", 1L, BigDecimal.ZERO, BigDecimal.TEN, date, ref, BigDecimal.TEN, WalletHistoryType.FUNDIN, 2L);
 		walletHistoryDao.insert(history);
 		WalletHistory historyFromDB = walletHistoryDao.getByRefAndType(ref, WalletHistoryType.FUNDIN);
 		assertEquals(history, historyFromDB);
